@@ -37,7 +37,6 @@ public class GameManager {
 
     public static void start(TurnCallback callback) {
         instance.callback = callback;
-        instance.connection.sendData("SETUP");
         callback.setUp();
     }
 
@@ -56,11 +55,7 @@ public class GameManager {
     private void dataReceived(String data) {
         System.out.println("Received data: \"" + data + "\"");
 
-        if (data.equals("SETUP")){
-            callback.setUp();
-        }
-
-        else if (data.equals("READY")){
+        if (data.equals("READY")){
             enemySetupDone = true;
             callback.onEnemyReady();
         }

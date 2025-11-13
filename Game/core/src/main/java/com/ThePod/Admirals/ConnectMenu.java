@@ -1,9 +1,12 @@
 package com.ThePod.Admirals;
 
+import com.ThePod.Admirals.board.AttackResult;
+import com.ThePod.Admirals.board.Coordinates;
 import com.ThePod.Admirals.exception.AdmiralsException;
 import com.ThePod.Admirals.network.ClientConnection;
 import com.ThePod.Admirals.network.HostConnection;
 import com.ThePod.Admirals.network.callback.ConnectionCallback;
+import com.ThePod.Admirals.network.callback.TurnCallback;
 import com.ThePod.Admirals.util.CodeGenerator;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -183,6 +186,8 @@ public class ConnectMenu implements Screen {
         float animY = 300;
         waitingAnimation = new UiDisplay(atlas, "Waiting", 8, 0.8f, animX, animY, animWidth, animHeight, viewport);
 
+        ConnectionCallback connectionCallback = getConnectionCallback();
+
         // Click Handlers
         backButton.setOnClick(() -> {
             if (isHosting || isConnecting) {
@@ -197,19 +202,7 @@ public class ConnectMenu implements Screen {
         hostingButton.setOnClick(() -> {
             isHosting = true;
             System.out.println("Starting hosting");
-            GameManager.newInstance(new HostConnection(new ConnectionCallback() {
-                @Override
-                public void onConnect() {
-                    System.out.println("Successfully connected to client");
-                    Gdx.app.postRunnable(() -> game.setScreen(new PrepareShipsScreen(game)));
-                }
-
-                @Override
-                public void onDisconnect(AdmiralsException e) {
-                    if (e == null) System.out.println("Successfully disconnected from client");
-                    else System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
-                }
-            }));
+            GameManager.newInstance(new HostConnection(connectionCallback));
         });
 
         connectButton.setOnClick(() -> {
@@ -232,19 +225,7 @@ public class ConnectMenu implements Screen {
                 return;
             }
 
-            GameManager.newInstance(new ClientConnection(code, new ConnectionCallback() {
-                @Override
-                public void onConnect() {
-                    System.out.println("Successfully connected to server");
-                    Gdx.app.postRunnable(() -> game.setScreen(new PrepareShipsScreen(game)));
-                }
-
-                @Override
-                public void onDisconnect(AdmiralsException e) {
-                    if (e == null) System.out.println("Successfully disconnected from client");
-                    else System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
-                }
-            }));
+            GameManager.newInstance(new ClientConnection(code, connectionCallback));
         });
 
         // Set up Input Multiplexer
@@ -253,6 +234,64 @@ public class ConnectMenu implements Screen {
         inputMultiplexer.addProcessor(game.cursorHandler);
 
         setDynamicPrompt("Your Code: " + GameManager.getCode());
+    }
+
+    private ConnectionCallback getConnectionCallback() {
+        PrepareShipsScreen prepareShipsScreen = new PrepareShipsScreen(game);
+
+        //TurnCallback
+        TurnCallback turnCallback = new TurnCallback() {
+            @Override
+            public void setUp() {
+                Gdx.app.postRunnable(() -> game.setScreen(prepareShipsScreen));
+            }
+
+            @Override
+            public void onMyTurn() {
+
+            }
+
+            @Override
+            public void onEnemyTurn() {
+
+            }
+
+            @Override
+            public void myAttack(String message) {
+
+            }
+
+            @Override
+            public void enemyAttack(Coordinates coordinates, AttackResult result, String message) {
+
+            }
+
+            @Override
+            public void onGameOver(String message) {
+
+            }
+
+            @Override
+            public void onEnemyReady() {
+                prepareShipsScreen.setEnemyIndicator(true);
+            }
+        };
+
+        // ConnectionCallback
+        ConnectionCallback connectionCallback = new ConnectionCallback() {
+            @Override
+            public void onConnect() {
+                System.out.println("Successfully connected to client");
+                GameManager.start(turnCallback);
+            }
+
+            @Override
+            public void onDisconnect(AdmiralsException e) {
+                if (e == null) System.out.println("Successfully disconnected from client");
+                else System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
+            }
+        };
+        return connectionCallback;
     }
 
     @Override
