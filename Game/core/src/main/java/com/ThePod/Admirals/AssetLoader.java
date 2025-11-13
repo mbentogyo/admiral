@@ -6,6 +6,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.assets.loaders.FileHandleResolver;
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
+import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
+import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader.FreeTypeFontLoaderParameter;
 
 //// Use This To Load Assets Into The Game And Fetch Them For Use
 /// Centralized Assset Loader Using Singleton Pattern
@@ -17,13 +23,14 @@ public class AssetLoader {
 
      // --- Cached Assets ---
      // Add public fields here for assets you want to access frequently
-     // We will assign these in the cacheAssets() method after loading
      public TextureAtlas admiralsUiAtlas;
-     // Example: public Sound clickSound;
-     // Example: public BitmapFont defaultFont;
+     public BitmapFont operatorFont;
      
      private AssetLoader() {
          manager = new AssetManager();
+         FileHandleResolver resolver = new InternalFileHandleResolver();
+         manager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
+         manager.setLoader(BitmapFont.class, ".ttf", new FreetypeFontLoader(resolver));
      }
      
      public static AssetLoader getInstance() {
@@ -43,28 +50,26 @@ public class AssetLoader {
          manager.load("Menu_Frame.png", Texture.class);
          manager.load("Connecting_Frame.png", Texture.class);
          manager.load("Play_Frame.png", Texture.class);
+
+         // Load Font
+         FreeTypeFontLoaderParameter fontParams = new FreeTypeFontLoaderParameter();
+         fontParams.fontFileName = "8Bit_Operator.ttf";
+         fontParams.fontParameters.size = 32;
+         manager.load("8Bit_Operator.ttf", BitmapFont.class, fontParams);
          
-         // Example: Load sounds
-         // manager.load("sounds/click.wav", Sound.class);
          
-         // Example: Load music
-         // manager.load("music/theme.mp3", Music.class);
-         
-         // Example: Load fonts
-         // manager.load("fonts/arial.fnt", BitmapFont.class);
      }
 
     
       // Assigns loaded assets to the public fields for easy access.
       // Must be called AFTER finishLoading() or once update() returns true.
-
      public void cacheAssets() {
         // Get the loaded assets and assign them to our public fields
         admiralsUiAtlas = manager.get("Admirals_Ui.atlas", TextureAtlas.class);
 
-        // Example: Assign other cached assets
-        // clickSound = manager.get("sounds/click.wav", Sound.class);
-        // defaultFont = manager.get("fonts/arial.fnt", BitmapFont.class);
+        // Get Font
+        operatorFont = manager.get("8Bit_Operator.ttf", BitmapFont.class);
+        
      }
      
      // Call this in your render loop to process loading
@@ -118,7 +123,7 @@ public class AssetLoader {
          manager.dispose();
          // Nullify references
          admiralsUiAtlas = null;
-         // clickSound = null;
-         // defaultFont = null;
+         operatorFont = null;
+         
      }
 }
