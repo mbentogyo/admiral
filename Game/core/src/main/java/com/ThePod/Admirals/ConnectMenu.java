@@ -273,7 +273,7 @@ public class ConnectMenu implements Screen {
 
             @Override
             public void onEnemyReady() {
-                prepareShipsScreen.setEnemyIndicator(true);
+                Gdx.app.postRunnable(() -> prepareShipsScreen.setEnemyIndicator(true));
             }
         };
 
