@@ -27,7 +27,7 @@ public enum AttackResult {
         for (AttackResult attackResult : values()) {
             if (attackResult.getCellState().getValue() == i) return attackResult;
         }
-
+        
         return null;
     }
 }

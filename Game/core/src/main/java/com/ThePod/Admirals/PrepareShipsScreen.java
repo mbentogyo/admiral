@@ -5,6 +5,9 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.utils.Array; 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont; 
+import com.badlogic.gdx.graphics.g2d.GlyphLayout; 
+import com.badlogic.gdx.graphics.Color; 
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion; 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -13,6 +16,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport; 
 import com.ThePod.Admirals.board.CellState;
+import com.ThePod.Admirals.GameManager; 
 
 public class PrepareShipsScreen implements Screen {
 
@@ -33,7 +37,7 @@ public class PrepareShipsScreen implements Screen {
     private Array<PrepareShip> ships;
     private PrepareShip selectedShip = null;
     
-    // Ship declarations were missing
+    // Ship declarations
     private PrepareShip carrier;
     private PrepareShip corvette;
     private PrepareShip frigate;
@@ -44,10 +48,51 @@ public class PrepareShipsScreen implements Screen {
     // The new grid system
     private BoardPrepGrid prepGrid;
 
+    // Indicator Lights
+    private IndicatorLight playerIndicator;
+    private IndicatorLight enemyIndicator;
+
+    // Indicator Labels
+    private BitmapFont font;
+    private GlyphLayout playerLabelLayout;
+    private GlyphLayout enemyLabelLayout;
+    private float playerLabelX, playerLabelY;
+    private float enemyLabelX, enemyLabelY;
+    
+    // Play Button
+    private UiButton playButton; 
+    private boolean isLayoutLocked = false; 
+
 
     // Constructor to get the main game object
     public PrepareShipsScreen(Main game) {
         this.game = game;
+    }
+
+    // Public methods to control indicators
+
+    //TODO: Turn Green When Player Is Ready
+    public void setPlayerIndicator(boolean isGreen) {
+        if (playerIndicator != null) {
+            playerIndicator.setGreen(isGreen);
+        }
+    }
+
+    //TODO: Turn Green When Enemy Is ready
+    public void setEnemyIndicator(boolean isGreen) {
+        if (enemyIndicator != null) {
+            enemyIndicator.setGreen(isGreen);
+        }
+    }
+    
+    // Check if all ships are on the board
+    private boolean areAllShipsPlaced() {
+        for (PrepareShip ship : ships) {
+            if (!ship.isPlaced()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -55,6 +100,7 @@ public class PrepareShipsScreen implements Screen {
         // Load the background texture when screen is shown
         background = AssetLoader.getInstance().getTexture("Play_Frame.png");
         TextureAtlas atlas = AssetLoader.getInstance().admiralsUiAtlas;
+        font = AssetLoader.getInstance().operatorFont; // Get the font
         this.viewport = game.screenCamera.getViewport(); 
         
         ships = new Array<>();
@@ -64,6 +110,28 @@ public class PrepareShipsScreen implements Screen {
         
         // Create the grid
         prepGrid = new BoardPrepGrid(atlas, gameBoard);
+
+        // Create Indicators
+        float boardLeftX = gameBoard.getBounds().x;
+        float boardTopY = gameBoard.getBounds().y + gameBoard.getBounds().height;
+        float indicatorY = boardTopY + 10; // 10 units above board
+        float indicatorWidth = 30;
+        float indicatorHeight = 19;
+        float labelPadding = 5; // Padding between light and text
+        float indicatorPadding = 80; // Padding between "You" and "Opponent" groups
+
+        // Player Indicator and Label
+        playerIndicator = new IndicatorLight(atlas, boardLeftX, indicatorY, indicatorWidth, indicatorHeight);
+        playerLabelLayout = new GlyphLayout(font, "You");
+        playerLabelX = boardLeftX + indicatorWidth + labelPadding;
+        playerLabelY = indicatorY + (indicatorHeight / 2) + (playerLabelLayout.height / 2);
+
+        // Enemy Indicator and Label
+        float enemyGroupStartX = boardLeftX + indicatorWidth + playerLabelLayout.width + indicatorPadding;
+        enemyIndicator = new IndicatorLight(atlas, enemyGroupStartX, indicatorY, indicatorWidth, indicatorHeight);
+        enemyLabelLayout = new GlyphLayout(font, "Opponent");
+        enemyLabelX = enemyGroupStartX + indicatorWidth + labelPadding;
+        enemyLabelY = indicatorY + (indicatorHeight / 2) + (enemyLabelLayout.height / 2);
         
         // Position the ship containers to the right of the board
         float containerX = 700; 
@@ -109,10 +177,37 @@ public class PrepareShipsScreen implements Screen {
         shipContainer2 = new UiDisplay(atlas, "ShipContainer", 2, containerX, containerY, c2_w, containerHeight, viewport);
         patrolBoat = new PrepareShip(atlas.findRegion("PatrolBoat"), containerX + (c2_w - 64) / 2, containerY + (containerHeight - 32) / 2, 64, 32, viewport, 2, CellState.PATROL_BOAT.getValue());
         ships.add(patrolBoat);
+        
+        // Play Button
+        float playButtonWidth = 128; // Made bigger
+        float playButtonHeight = 40; // Made bigger
+        float playButtonX = containerX; // Aligned with containers' left edge
+        float playButtonY = containerY - playButtonHeight - padding; // Below last container
+        playButton = new UiButton(atlas, "Play_Inactive", "Play_Active", 0.2f, playButtonX, playButtonY, playButtonWidth, playButtonHeight, viewport);
+
+        playButton.setOnClick(() -> {
+            // Only fire once if all ships are placed and not already locked
+            if (areAllShipsPlaced() && !isLayoutLocked) {
+                isLayoutLocked = true;
+                setPlayerIndicator(true); // Turn light green
+
+                // Get the board state and send it to the game manager
+                int[][] boardState = prepGrid.getBoardState();
+                // TODO: Give board to game manager
+                
+                // Log for debugging
+                Gdx.app.log("PrepareShipsScreen", "Layout locked and board state submitted to GameManager.");
+            }
+        });
     }
     
     // Main input controller
     private void handleInput() {
+        // Stop all ship movement if the layout is locked
+        if (isLayoutLocked) {
+            return;
+        }
+    
         Vector2 mouse = new Vector2(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(mouse);
         
@@ -149,7 +244,6 @@ public class PrepareShipsScreen implements Screen {
                 // Check for a valid placement
                 if (coords != null && prepGrid.isPlacementValid(coords[0], coords[1], selectedShip.getLength(), selectedShip.isHorizontal())) {
                     
-                    // --- START OF FIX ---
                     // Calculate snapX and snapY *exactly* as we do in the dragging section
                     float snapX = prepGrid.getGridStartX() + coords[1] * 32f;
                     float snapY;
@@ -169,7 +263,6 @@ public class PrepareShipsScreen implements Screen {
                         // Get the Y coord of that bottom tile
                         snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - bottomRow) * 32f);
                     }
-                    // --- END OF FIX ---
                     
                     prepGrid.placeShip(coords[0], coords[1], selectedShip.getLength(), selectedShip.isHorizontal(), selectedShip.getCellStateValue());
                     selectedShip.placeAt(snapX, snapY);
@@ -200,15 +293,14 @@ public class PrepareShipsScreen implements Screen {
                 float snapX = prepGrid.getGridStartX() + coords[1] * 32f;
                 float snapY;
 
-                // --- START OF FIX ---
                 // This logic must be identical to the "placing" logic
                 if (selectedShip.isHorizontal()) {
                     // Horizontal snap is simple: snap to the top-left tile
-                    // We use coords[0] (the row) for the Y calculation
+                    // use coords[0] (the row) for the Y calculation
                     snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - coords[0]) * 32f);
                 } else {
                     // Vertical snap: The ship's bounds.y is its *bottom* tile
-                    // We must calculate the Y coord of the bottom-most tile
+                    // calculate the Y coord of the bottom-most tile
                     int bottomRow = coords[0] + selectedShip.getLength() - 1;
                     
                     if (bottomRow >= BoardPrepGrid.GRID_ROWS) {
@@ -218,7 +310,6 @@ public class PrepareShipsScreen implements Screen {
                     // Get the Y coord of that bottom tile
                     snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - bottomRow) * 32f);
                 }
-                // --- END OF FIX ---
                 
                 // Now set the position, which the render method will use
                 selectedShip.getBounds().setPosition(snapX, snapY);
@@ -245,6 +336,11 @@ public class PrepareShipsScreen implements Screen {
         shipContainer4_3.update(delta);
         shipContainer3.update(delta);
         shipContainer2.update(delta);
+        
+        // Only update button hover if all ships are placed and not locked
+        if (areAllShipsPlaced() && !isLayoutLocked) {
+            playButton.update(delta);
+        }
 
          // Tell the SpriteBatch to use the camera's view
         game.batch.setProjectionMatrix(game.screenCamera.getCamera().combined);
@@ -259,12 +355,25 @@ public class PrepareShipsScreen implements Screen {
         // Draw the grid
         prepGrid.render(game.batch);
 
+        // Draw indicators
+        playerIndicator.render(game.batch);
+        enemyIndicator.render(game.batch);
+
+        // Draw indicator labels
+        font.setColor(Color.WHITE);
+        font.draw(game.batch, playerLabelLayout, playerLabelX, playerLabelY);
+        font.draw(game.batch, enemyLabelLayout, enemyLabelX, enemyLabelY);
+
+        // Draw Ship Containers
         shipContainer5.render(game.batch);
         shipContainer4_1.render(game.batch);
         shipContainer4_2.render(game.batch);
         shipContainer4_3.render(game.batch);
         shipContainer3.render(game.batch);
         shipContainer2.render(game.batch);
+        
+        // Draw the Play button
+        playButton.render(game.batch);
 
         // Draw Draggable Ships
         // Draw placed ships first, then the selected one on top

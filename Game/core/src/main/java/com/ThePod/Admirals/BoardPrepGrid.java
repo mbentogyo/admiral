@@ -52,6 +52,11 @@ public class BoardPrepGrid {
         }
     }
 
+    // Public getter for the game logic manager
+    public int[][] getBoardState() {
+        return boardState;
+    }
+
     // Get the (row, col) from world coordinates (like mouse)
     public int[] getTileCoords(float worldX, float worldY) {
         if (!gridBounds.contains(worldX, worldY)) {
