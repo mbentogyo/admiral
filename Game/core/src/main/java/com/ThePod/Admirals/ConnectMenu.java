@@ -201,7 +201,7 @@ public class ConnectMenu implements Screen {
                 @Override
                 public void onConnect() {
                     System.out.println("Successfully connected to client");
-                    game.setScreen(new PrepareShipsScreen(game));
+                    Gdx.app.postRunnable(() -> game.setScreen(new PrepareShipsScreen(game)));
                 }
 
                 @Override
@@ -236,7 +236,7 @@ public class ConnectMenu implements Screen {
                 @Override
                 public void onConnect() {
                     System.out.println("Successfully connected to server");
-                    game.setScreen(new PrepareShipsScreen(game));
+                    Gdx.app.postRunnable(() -> game.setScreen(new PrepareShipsScreen(game)));
                 }
 
                 @Override
