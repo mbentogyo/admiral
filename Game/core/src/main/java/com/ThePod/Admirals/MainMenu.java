@@ -5,7 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.Viewport; 
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class MainMenu implements Screen {
 
@@ -15,12 +15,12 @@ public class MainMenu implements Screen {
     //Ui Elements & Local Variables
     private UiButton playButton;
     private UiButton exitButton;
-    private UiDisplay centerPiece; 
-    
+    private UiDisplay centerPiece;
+
     public MainMenu(Main game) {
         this.game = game;
     }
-    
+
     @Override
     public void show() {
         // Load the background texture when screen is shown
@@ -36,28 +36,28 @@ public class MainMenu implements Screen {
 
         // Click Handlers
         playButton.setOnClick(() -> {
-            game.setScreen(new PrepareShipsScreen(game));
-            
+            game.setScreen(new ConnectMenu(game));
+
         });
-    
+
         exitButton.setOnClick(() -> {
             // Empty click handler
         });
-        
+
     }
-    
+
     @Override
     public void render(float delta) {
         // Clear screen
         ScreenUtils.clear(0, 0, 0, 1);
-        
+
         // Update the camera
         game.screenCamera.update();
 
         // This updates the button's hover state and checks for clicks
         playButton.update(delta);
         exitButton.update(delta);
-        centerPiece.update(delta); 
+        centerPiece.update(delta);
 
         // Tell the SpriteBatch to use the camera's view
         game.batch.setProjectionMatrix(game.screenCamera.getCamera().combined);
@@ -67,23 +67,23 @@ public class MainMenu implements Screen {
         game.batch.draw(background, 0, 0, ScreenCamera.WORLD_WIDTH, ScreenCamera.WORLD_HEIGHT);
 
         // Draw Ui Objects
-        centerPiece.render(game.batch); 
+        centerPiece.render(game.batch);
         playButton.render(game.batch);
-        exitButton.render(game.batch); 
+        exitButton.render(game.batch);
 
         game.batch.end();
     }
-    
+
     @Override
     public void resize(int width, int height) {
         // Update the viewport when the window is resized
         game.screenCamera.resize(width, height);
     }
-    
+
     @Override
     public void hide() {
     }
-    
+
     @Override
     public void dispose() {
         // Don't dispose the texture here - AssetLoader manages it

@@ -12,7 +12,7 @@ import lombok.Getter;
 import java.util.Random;
 
 public class GameManager {
-    private static GameManager instance;
+    private static GameManager instance = null;
 
     private boolean isMyTurn = false;
     private final Connection connection;
@@ -27,7 +27,7 @@ public class GameManager {
     }
 
     public static void newInstance(Connection connection) {
-        instance.connection.stop();
+        if (instance != null) instance.connection.stop();
         instance = new GameManager(connection);
     }
 

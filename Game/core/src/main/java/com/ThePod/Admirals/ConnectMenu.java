@@ -122,13 +122,13 @@ public class ConnectMenu implements Screen {
         connectCodeInput = new TextField("", skin);
         connectCodeInput.setSize(320, 60);
         connectCodeInput.setPosition((ScreenCamera.WORLD_WIDTH - connectCodeInput.getWidth()) / 2, 400);
-        
+
         // Add a TextFieldListener to detect text changes
         connectCodeInput.setTextFieldListener(new TextField.TextFieldListener() {
             @Override
             public void keyTyped(TextField textField, char c) {
                 int currentLength = textField.getText().length();
-                
+
                 // Check if text was added (length increased)
                 if (currentLength > lastTextLength) {
                     // Play the next sound in sequence
@@ -150,12 +150,12 @@ public class ConnectMenu implements Screen {
                 else if (currentLength < lastTextLength) {
                     backspaceSound.play(0.6f);
                 }
-                
+
                 // Update last length
                 lastTextLength = currentLength;
             }
         });
-        
+
         stage.addActor(connectCodeInput);
 
         // Instantiate UI Elements
@@ -201,11 +201,13 @@ public class ConnectMenu implements Screen {
                 @Override
                 public void onConnect() {
                     System.out.println("Successfully connected to client");
+                    game.setScreen(new PrepareShipsScreen(game));
                 }
 
                 @Override
                 public void onDisconnect(AdmiralsException e) {
-                    System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
+                    if (e == null) System.out.println("Successfully disconnected from client");
+                    else System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
                 }
             }));
         });
@@ -222,15 +224,25 @@ public class ConnectMenu implements Screen {
         submitConnectButton.setOnClick(() -> {
             System.out.println("Connecting with code: " + connectCodeInput.getText());
 
-            GameManager.newInstance(new ClientConnection(CodeGenerator.decode(connectCodeInput.getText()), new ConnectionCallback() {
+            String code = "";
+            try {
+                code = CodeGenerator.decode(connectCodeInput.getText());
+            } catch (IllegalArgumentException e) {
+                //TODO toast to user that code is invalid
+                return;
+            }
+
+            GameManager.newInstance(new ClientConnection(code, new ConnectionCallback() {
                 @Override
                 public void onConnect() {
                     System.out.println("Successfully connected to server");
+                    game.setScreen(new PrepareShipsScreen(game));
                 }
 
                 @Override
                 public void onDisconnect(AdmiralsException e) {
-                    System.out.println("Unsuccessfully connected to server: " +  e.getMessage());
+                    if (e == null) System.out.println("Successfully disconnected from client");
+                    else System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
                 }
             }));
         });
