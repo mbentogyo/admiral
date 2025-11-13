@@ -1,5 +1,10 @@
 package com.ThePod.Admirals;
 
+import com.ThePod.Admirals.exception.AdmiralsException;
+import com.ThePod.Admirals.network.ClientConnection;
+import com.ThePod.Admirals.network.HostConnection;
+import com.ThePod.Admirals.network.callback.ConnectionCallback;
+import com.ThePod.Admirals.util.CodeGenerator;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
@@ -28,7 +33,7 @@ public class ConnectMenu implements Screen {
     private UiTextButton hostingButton;
     private UiTextButton connectButton;
     private UiDisplay waitingAnimation;
-    private UiTextButton submitConnectButton; 
+    private UiTextButton submitConnectButton;
 
     // Scene2D for Text Input
     private Stage stage;
@@ -43,7 +48,7 @@ public class ConnectMenu implements Screen {
 
     // State
     private boolean isHosting = false;
-    private boolean isConnecting = false; 
+    private boolean isConnecting = false;
     private String dynamicPromptText = "Waiting for connection...";
 
     private InputMultiplexer inputMultiplexer;
@@ -53,12 +58,11 @@ public class ConnectMenu implements Screen {
         this.game = game;
     }
 
-    
-    // TODO: Set Connection Code Text Here
+
     // @param newText The new text to display.
     public void setDynamicPrompt(String newText) {
         this.dynamicPromptText = newText;
-        // Update the layout so it can be centered correctly
+
         if (dynamicPromptLayout != null && font != null) {
             dynamicPromptLayout.setText(font, dynamicPromptText);
         }
@@ -70,9 +74,9 @@ public class ConnectMenu implements Screen {
         background = AssetLoader.getInstance().getTexture("Connecting_Frame.png");
         atlas = AssetLoader.getInstance().admiralsUiAtlas;
         viewport = game.screenCamera.getViewport();
-        font = AssetLoader.getInstance().operatorFont; 
+        font = AssetLoader.getInstance().operatorFont;
 
-        // Create Scene2D Stage and Skin for TextField 
+        // Create Scene2D Stage and Skin for TextField
         stage = new Stage(viewport, game.batch);
         skin = new Skin();
         skin.add("default-font", font, BitmapFont.class);
@@ -89,7 +93,7 @@ public class ConnectMenu implements Screen {
         style.font = skin.getFont("default-font");
         style.fontColor = Color.WHITE;
         style.background = new TextureRegionDrawable(atlas.findRegion("ShipContainer"));
-        
+
         // Add padding so text is not on the edge
         style.background.setLeftWidth(35f); // Increased from 15f
         style.background.setRightWidth(15f);
@@ -113,7 +117,7 @@ public class ConnectMenu implements Screen {
         staticPromptX = (ScreenCamera.WORLD_WIDTH - staticPromptLayout.width) / 2;
         staticPromptY = 450;
 
-        // Dynamic Prompt Text 
+        // Dynamic Prompt Text
         dynamicPromptLayout = new GlyphLayout(font, dynamicPromptText);
 
         // Clickable Text Buttons
@@ -127,7 +131,7 @@ public class ConnectMenu implements Screen {
         float animWidth = 320;
         float animHeight = 45;
         float animX = (ScreenCamera.WORLD_WIDTH - animWidth) / 2;
-        float animY = 300; 
+        float animY = 300;
         waitingAnimation = new UiDisplay(atlas, "Waiting", 8, 0.8f, animX, animY, animWidth, animHeight, viewport);
 
 
@@ -144,6 +148,17 @@ public class ConnectMenu implements Screen {
 
         hostingButton.setOnClick(() -> {
             isHosting = true; // Toggle state
+            GameManager.newInstance(new HostConnection(new ConnectionCallback() {
+                @Override
+                public void onConnect() {
+                    System.out.println("Successfully connected to client");
+                }
+
+                @Override
+                public void onDisconnect(AdmiralsException e) {
+                    System.out.println("Unsuccessfully connected to client: " +  e.getMessage());
+                }
+            }));
         });
 
         connectButton.setOnClick(() -> {
@@ -152,25 +167,39 @@ public class ConnectMenu implements Screen {
             stage.setKeyboardFocus(connectCodeInput); // Auto-focus the text field
         });
 
-        // TODO: take "connectCodeInput" value and handle connect logic
         submitConnectButton.setOnClick(() -> {
             System.out.println("Connecting with code: " + connectCodeInput.getText()); // Just For Debugging
+
+            //TODO ClientConnection
+            GameManager.newInstance(new ClientConnection(CodeGenerator.decode(connectCodeInput.getText()), new ConnectionCallback() {
+                @Override
+                public void onConnect() {
+                    System.out.println("Successfully connected to server");
+                }
+
+                @Override
+                public void onDisconnect(AdmiralsException e) {
+                    System.out.println("Unsuccessfully connected to server: " +  e.getMessage());
+                }
+            }));
         });
 
         // Set up Input Multiplexer
         inputMultiplexer = new InputMultiplexer();
         inputMultiplexer.addProcessor(stage);
         inputMultiplexer.addProcessor(game.cursorHandler);
+
+        setDynamicPrompt("Your Code: " + GameManager.getCode());
     }
 
     @Override
     public void render(float delta) {
         // Clear screen
         ScreenUtils.clear(0, 0, 0, 1);
-        
+
         // Update the camera
         game.screenCamera.update();
-        
+
         // Update UI elements based on state
         backButton.update(delta);
 
@@ -194,7 +223,7 @@ public class ConnectMenu implements Screen {
         // Draw Ui Objects
         backButton.render(game.batch);
 
-        font.setColor(Color.WHITE); 
+        font.setColor(Color.WHITE);
 
         if (isHosting) {
             // Draw the dynamic prompt
@@ -217,7 +246,7 @@ public class ConnectMenu implements Screen {
             hostingButton.render(game.batch);
             connectButton.render(game.batch);
         }
-        
+
         font.setColor(Color.WHITE);
 
         game.batch.end();
