@@ -1,6 +1,6 @@
 package com.ThePod.Admirals.board;
 
- import lombok.Getter;
+import lombok.Getter;
 
 public enum CellState {
     CARRIER         (7),
