@@ -53,6 +53,8 @@ public class GameManager {
     }
 
     private void dataReceived(String data) {
+        System.out.println("Received data: \"" + data + "\"");
+
         if (data.equals("SETUP")){
             callback.setUp();
         }

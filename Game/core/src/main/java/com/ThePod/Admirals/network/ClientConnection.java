@@ -15,6 +15,7 @@ public class ClientConnection extends Connection {
     public ClientConnection(String ip, ConnectionCallback connectionCallback) {
         super(connectionCallback);
         this.ip = ip;
+        start();
     }
 
     @Override

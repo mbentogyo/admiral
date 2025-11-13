@@ -148,6 +148,7 @@ public class ConnectMenu implements Screen {
 
         hostingButton.setOnClick(() -> {
             isHosting = true; // Toggle state
+            System.out.println("Starting hosting");
             GameManager.newInstance(new HostConnection(new ConnectionCallback() {
                 @Override
                 public void onConnect() {

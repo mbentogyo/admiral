@@ -14,6 +14,7 @@ public class HostConnection extends Connection {
 
     public HostConnection(ConnectionCallback connectionCallback) {
         super(connectionCallback);
+        start();
     }
 
     @Override
