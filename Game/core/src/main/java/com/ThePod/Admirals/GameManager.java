@@ -12,7 +12,7 @@ import lombok.Getter;
 import java.util.Random;
 
 public class GameManager {
-    @Getter private static GameManager instance;
+    private static GameManager instance;
 
     private boolean isMyTurn = false;
     private final Connection connection;
@@ -27,6 +27,7 @@ public class GameManager {
     }
 
     public static void newInstance(Connection connection) {
+        instance.connection.stop();
         instance = new GameManager(connection);
     }
 
@@ -34,22 +35,22 @@ public class GameManager {
         return CodeGenerator.encode(Connection.getCurrentIP());
     }
 
-    public void start(TurnCallback callback) {
-        this.callback = callback;
-        connection.sendData("SETUP");
+    public static void start(TurnCallback callback) {
+        instance.callback = callback;
+        instance.connection.sendData("SETUP");
         callback.setUp();
     }
 
-    public void setupFinished(int[][] board) {
-        myBoard = new MyBoard(board);
-        enemyBoard = new EnemyBoard();
+    public static void setupFinished(int[][] board) {
+        instance.myBoard = new MyBoard(board);
+        instance.enemyBoard = new EnemyBoard();
 
-        if (enemySetupDone) connection.sendData("START?");
-        else connection.sendData("READY");
+        if (instance.enemySetupDone) instance.connection.sendData("START?");
+        else instance.connection.sendData("READY");
     }
 
-    public void attack(Coordinates coordinates) {
-        connection.sendData("ATTACK " +  coordinates.toString());
+    public static void attack(Coordinates coordinates) {
+        instance.connection.sendData("ATTACK " +  coordinates.toString());
     }
 
     private void dataReceived(String data) {
@@ -61,6 +62,7 @@ public class GameManager {
 
         else if (data.equals("READY")){
             enemySetupDone = true;
+            callback.onEnemyReady();
         }
 
         else if (data.equals("START?")) {
@@ -94,6 +96,7 @@ public class GameManager {
 
             } else if (substring.startsWith("GAME_OVER")) {
                 //TODO end game logic
+                callback.onGameOver("TODO");
             }
         }
 

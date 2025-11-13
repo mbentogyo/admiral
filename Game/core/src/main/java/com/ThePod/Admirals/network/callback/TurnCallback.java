@@ -1,5 +1,8 @@
 package com.ThePod.Admirals.network.callback;
 
+import com.ThePod.Admirals.board.AttackResult;
+import com.ThePod.Admirals.board.Coordinates;
+
 public interface TurnCallback {
     /**
      * Method called for when the two players can start set up
@@ -24,13 +27,19 @@ public interface TurnCallback {
 
     /**
      * Method called after enemy attacks
+     * @param coordinates the coordinates of the attack
      * @param message message to display
      */
-    void enemyAttack(String message);
+    void enemyAttack(Coordinates coordinates, AttackResult result, String message);
 
     /**
      * Method called after game ends
      * @param message message to display
      */
     void onGameOver(String message);
+
+    /**
+     * Method called after enemy is ready AND player is not
+     */
+    void onEnemyReady();
 }
