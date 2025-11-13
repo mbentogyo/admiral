@@ -14,7 +14,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2; 
 import com.badlogic.gdx.utils.Array; 
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.Viewport; 
+import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.audio.Sound;
 import com.ThePod.Admirals.board.CellState;
 import com.ThePod.Admirals.GameManager; 
 
@@ -61,8 +62,12 @@ public class PrepareShipsScreen implements Screen {
     
     // Play Button
     private UiButton playButton; 
-    private boolean isLayoutLocked = false; 
-
+    private boolean isLayoutLocked = false;
+    
+    // Sound effects
+    private Sound hoverTileSound;
+    private int lastHoveredRow = -1;
+    private int lastHoveredCol = -1;
 
     // Constructor to get the main game object
     public PrepareShipsScreen(Main game) {
@@ -101,7 +106,11 @@ public class PrepareShipsScreen implements Screen {
         background = AssetLoader.getInstance().getTexture("Play_Frame.png");
         TextureAtlas atlas = AssetLoader.getInstance().admiralsUiAtlas;
         font = AssetLoader.getInstance().operatorFont; // Get the font
-        this.viewport = game.screenCamera.getViewport(); 
+        this.viewport = game.screenCamera.getViewport();
+        
+        // Load tile hover sound
+        AssetLoader assets = AssetLoader.getInstance();
+        hoverTileSound = assets.hoverTileSound;
         
         ships = new Array<>();
 
@@ -213,6 +222,23 @@ public class PrepareShipsScreen implements Screen {
         
         prepGrid.clearPreview();
 
+        // Handle tile hover sound
+        int[] coords = prepGrid.getTileCoords(mouse.x, mouse.y);
+        if (coords != null) {
+            // Only play sound if we moved to a different tile
+            if (coords[0] != lastHoveredRow || coords[1] != lastHoveredCol) {
+                if (hoverTileSound != null) {
+                    hoverTileSound.play(0.4f);
+                }
+                lastHoveredRow = coords[0];
+                lastHoveredCol = coords[1];
+            }
+        } else {
+            // Reset when not hovering over grid
+            lastHoveredRow = -1;
+            lastHoveredCol = -1;
+        }
+
         // Handle picking up a ship (Left Click)
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (selectedShip == null) {
@@ -239,22 +265,22 @@ public class PrepareShipsScreen implements Screen {
         if (!Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             if (selectedShip != null) {
                 // We were dragging a ship, and let go
-                int[] coords = prepGrid.getTileCoords(mouse.x, mouse.y);
+                int[] coords2 = prepGrid.getTileCoords(mouse.x, mouse.y);
                 
                 // Check for a valid placement
-                if (coords != null && prepGrid.isPlacementValid(coords[0], coords[1], selectedShip.getLength(), selectedShip.isHorizontal())) {
+                if (coords2 != null && prepGrid.isPlacementValid(coords2[0], coords2[1], selectedShip.getLength(), selectedShip.isHorizontal())) {
                     
                     // Calculate snapX and snapY *exactly* as we do in the dragging section
-                    float snapX = prepGrid.getGridStartX() + coords[1] * 32f;
+                    float snapX = prepGrid.getGridStartX() + coords2[1] * 32f;
                     float snapY;
 
                     if (selectedShip.isHorizontal()) {
                         // Horizontal snap is simple: snap to the top-left tile
-                        snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - coords[0]) * 32f);
+                        snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - coords2[0]) * 32f);
                     } else {
                         // Vertical snap: The ship's bounds.y is its *bottom* tile
                         // We must calculate the Y coord of the bottom-most tile
-                        int bottomRow = coords[0] + selectedShip.getLength() - 1;
+                        int bottomRow = coords2[0] + selectedShip.getLength() - 1;
                         
                         if (bottomRow >= BoardPrepGrid.GRID_ROWS) {
                             bottomRow = BoardPrepGrid.GRID_ROWS - 1; 
@@ -264,7 +290,7 @@ public class PrepareShipsScreen implements Screen {
                         snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - bottomRow) * 32f);
                     }
                     
-                    prepGrid.placeShip(coords[0], coords[1], selectedShip.getLength(), selectedShip.isHorizontal(), selectedShip.getCellStateValue());
+                    prepGrid.placeShip(coords2[0], coords2[1], selectedShip.getLength(), selectedShip.isHorizontal(), selectedShip.getCellStateValue());
                     selectedShip.placeAt(snapX, snapY);
                 } else {
                     // Invalid drop (off grid or overlapping)
@@ -285,23 +311,23 @@ public class PrepareShipsScreen implements Screen {
         if (selectedShip != null && selectedShip.isDragging()) {
             selectedShip.updateDragPosition(mouse);
             
-            int[] coords = prepGrid.getTileCoords(mouse.x, mouse.y);
-            if (coords != null) {
+            int[] coords3 = prepGrid.getTileCoords(mouse.x, mouse.y);
+            if (coords3 != null) {
                 // Show preview on grid
-                prepGrid.showPreview(coords[0], coords[1], selectedShip.getLength(), selectedShip.isHorizontal());
+                prepGrid.showPreview(coords3[0], coords3[1], selectedShip.getLength(), selectedShip.isHorizontal());
                 
-                float snapX = prepGrid.getGridStartX() + coords[1] * 32f;
+                float snapX = prepGrid.getGridStartX() + coords3[1] * 32f;
                 float snapY;
 
                 // This logic must be identical to the "placing" logic
                 if (selectedShip.isHorizontal()) {
                     // Horizontal snap is simple: snap to the top-left tile
                     // use coords[0] (the row) for the Y calculation
-                    snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - coords[0]) * 32f);
+                    snapY = prepGrid.getGridStartY() + ((BoardPrepGrid.GRID_ROWS - 1 - coords3[0]) * 32f);
                 } else {
                     // Vertical snap: The ship's bounds.y is its *bottom* tile
                     // calculate the Y coord of the bottom-most tile
-                    int bottomRow = coords[0] + selectedShip.getLength() - 1;
+                    int bottomRow = coords3[0] + selectedShip.getLength() - 1;
                     
                     if (bottomRow >= BoardPrepGrid.GRID_ROWS) {
                         bottomRow = BoardPrepGrid.GRID_ROWS - 1; 
@@ -327,6 +353,11 @@ public class PrepareShipsScreen implements Screen {
         
         // Run all input logic
         handleInput();
+        
+        // Update all ships (for hover sounds)
+        for (PrepareShip ship : ships) {
+            ship.update(delta);
+        }
         
         // Update all UI elements
         gameBoard.update(delta);
