@@ -36,7 +36,8 @@ public class MainMenu implements Screen {
 
         // Click Handlers
         playButton.setOnClick(() -> {
-            game.setScreen(new PrepareShipsScreen(game));
+            game.setScreen(new ConnectMenu(game));
+            
         });
     
         exitButton.setOnClick(() -> {
