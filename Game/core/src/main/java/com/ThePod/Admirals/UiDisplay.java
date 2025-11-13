@@ -1,16 +1,14 @@
 package com.ThePod.Admirals;
 
-// Import Statements
-import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.badlogic.gdx.Gdx;
 
-/**
- * Reusable Class For Handling UI Display Elements (non-interactive).
- * Handles both static single-frame regions and multi-frame looping animations.
- */
+// Reusable Class For Handling static or animated UI Display Elements
 public class UiDisplay {
 
     // Local Variables
@@ -19,62 +17,61 @@ public class UiDisplay {
     private final Animation<TextureRegion> animation;
     private TextureRegion staticFrame;
     private final boolean isAnimated;
-    private final TextureAtlas atlas; // <-- New field to store the atlas
+    private final TextureAtlas atlas; // Store atlas for setRegion
 
     private float stateTime = 0f;
 
-    /**
-     * Constructor: Handles both static and animated displays.
-     * @param atlas The TextureAtlas containing the region(s).
-     * @param regionName The base name of the region.
-     * @param frameCount If 1, loads a single, non-numbered region. If > 1, loads numbered frames (e.g., "regionName_1", "regionName_2").
-     * @param totalTime The total duration of one animation loop (if animated).
-     * @param x The x position.
-     * @param y The y position.
-     * @param width The width.
-     * @param height The height.
-     * @param viewport The game's viewport.
-     */
+    // Constructor 1: Handles animated displays (using numbered frames) or single static (non-indexed) displays
     public UiDisplay(TextureAtlas atlas, String regionName, int frameCount, float totalTime,
-                     float x, float y, float width, float height, Viewport viewport) {
+                       float x, float y, float width, float height, Viewport viewport) {
 
-        this.atlas = atlas; // <-- Store the atlas
+        this.atlas = atlas; // Store atlas
+        Array<TextureRegion> frames = new Array<>();
+        
+        if (frameCount <= 1) {
+            // Handle single static, non-indexed frame
+            TextureRegion frame = atlas.findRegion(regionName); // No index
+            if (frame != null) {
+                frames.add(frame);
+            }
+        } else {
+            // Handle animation
+            for (int i = 1; i <= frameCount; i++) {
+                TextureRegion frame = atlas.findRegion(regionName, i);
+                if (frame != null) {
+                    frames.add(frame);
+                }
+            }
+        }
+
         this.bounds = new Rectangle(x, y, width, height);
         this.viewport = viewport;
 
-        if (frameCount <= 1) {
-            // This is a static, single-frame display
+        if (frames.size > 1) {
+            // It's animated
+            this.isAnimated = true;
+            this.animation = new Animation<>(totalTime / (frameCount - 1), frames, Animation.PlayMode.LOOP);
+            this.staticFrame = null;
+        } else {
+            // It's static
             this.isAnimated = false;
             this.animation = null;
-            this.staticFrame = atlas.findRegion(regionName); // Find region by its exact name
-            if (this.staticFrame == null) {
-                Gdx.app.log("UiDisplay", "Could not find static region: " + regionName);
-            }
-        } else {
-            // This is an animated display
-            this.isAnimated = true;
-            this.staticFrame = null;
-            
-            Array<TextureRegion> frames = new Array<>();
-            for (int i = 1; i <= frameCount; i++) {
-                TextureRegion frame = atlas.findRegion(regionName, i); // Find numbered frames
-                if (frame != null) {
-                    frames.add(frame);
-                } else {
-                    Gdx.app.log("UiDisplay", "Could not find animation frame: " + regionName + "_" + i);
-                }
-            }
-
-            if (frames.size > 0) {
-                // The old code used (frameCount - 1), which is typical for frame duration, but totalTime / frames.size is safer
-                float frameDuration = totalTime / (float) frames.size; 
-                this.animation = new Animation<>(frameDuration, frames, Animation.PlayMode.LOOP);
-            } else {
-                Gdx.app.log("UiDisplay", "No animation frames found for: " + regionName);
-                this.animation = null; // Fallback
-            }
+            this.staticFrame = frames.size > 0 ? frames.get(0) : null;
         }
     }
+
+    // Constructor 2: Handles a single STATIC display using a specific INDEX
+    public UiDisplay(TextureAtlas atlas, String regionName, int index,
+                       float x, float y, float width, float height, Viewport viewport) {
+        
+        this.atlas = atlas; // Store atlas
+        this.bounds = new Rectangle(x, y, width, height);
+        this.viewport = viewport;
+        this.isAnimated = false; // This constructor is for static indexed images
+        this.animation = null;
+        this.staticFrame = atlas.findRegion(regionName, index); // Find the specific indexed region
+    }
+
 
     // Update Animation Frame (Only if Animated)
     public void update(float delta) {
@@ -95,38 +92,18 @@ public class UiDisplay {
         }
     }
 
-    /**
-     * Allows changing the visual region (Only for Static Displays).
-     * @param regionName The name of the new static region to display.
-     */
-    public void setRegion(String regionName) {
-        if (!isAnimated) {
-            // --- This is the improved part ---
-            // It now uses the stored atlas instead of the old static Loader
-            TextureRegion newRegion = this.atlas.findRegion(regionName);
+    // Public getter for the bounds, needed by BoardPrepGrid
+    public Rectangle getBounds() {
+        return this.bounds;
+    }
+
+    // Allows changing the visual region (Only for Static Displays)
+    public void setRegion(String regionName, int index) {
+        if (!isAnimated && this.atlas != null) {
+            TextureRegion newRegion = atlas.findRegion(regionName, index); // Indexed
             if (newRegion != null) {
                 this.staticFrame = newRegion;
-            } else {
-                Gdx.app.log("UiDisplay", "setRegion failed, could not find: " + regionName);
             }
         }
     }
-
-    // --- HOW TO USE ---
-    //
-    // In Local Variable
-    // private UiDisplay mainTitle;
-    //
-    // In show()
-    // // Example for an animated title with 4 frames
-    // mainTitle = new UiDisplay(atlas, "Ui_MainTitle", 4, 1.0f, 220, 300, 800, 300, screenCamera.getViewport());
-    // // Example for a static, non-animated image
-    // // someImage = new UiDisplay(atlas, "Static_Image", 1, 0f, 100, 100, 50, 50, screenCamera.getViewport());
-    //
-    // In render()
-    // mainTitle.update(delta);
-    // mainTitle.render(batch); // In Draw Call/Batch
-    //
-    // To change a static image:
-    // // someImage.setRegion("New_Static_Image");
 }
