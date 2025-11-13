@@ -28,7 +28,6 @@ build/
 gradle-app.setting
 
 # LibGDX asset caches (safe to rebuild)
-*.atlas
 *.pack.*
 *.tmp
 *.iml
