@@ -20,6 +20,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.audio.Sound;
 
 public class ConnectMenu implements Screen {
 
@@ -53,11 +54,18 @@ public class ConnectMenu implements Screen {
 
     private InputMultiplexer inputMultiplexer;
 
+    // Sound effects for text input
+    private Sound inputSound1;
+    private Sound inputSound2;
+    private Sound inputSound3;
+    private Sound backspaceSound;
+    private int soundIndex = 0; // Cycles through 0, 1, 2
+    private int lastTextLength = 0; // Track text length to detect changes
+
     // Constructor to get the main game object
     public ConnectMenu(Main game) {
         this.game = game;
     }
-
 
     // @param newText The new text to display.
     public void setDynamicPrompt(String newText) {
@@ -75,6 +83,13 @@ public class ConnectMenu implements Screen {
         atlas = AssetLoader.getInstance().admiralsUiAtlas;
         viewport = game.screenCamera.getViewport();
         font = AssetLoader.getInstance().operatorFont;
+
+        // Load input sounds
+        AssetLoader assets = AssetLoader.getInstance();
+        inputSound1 = assets.inputCode1Sound;
+        inputSound2 = assets.inputCode2Sound;
+        inputSound3 = assets.inputCode3Sound;
+        backspaceSound = assets.inputBackspaceSound;
 
         // Create Scene2D Stage and Skin for TextField
         stage = new Stage(viewport, game.batch);
@@ -95,19 +110,53 @@ public class ConnectMenu implements Screen {
         style.background = new TextureRegionDrawable(atlas.findRegion("ShipContainer"));
 
         // Add padding so text is not on the edge
-        style.background.setLeftWidth(35f); // Increased from 15f
+        style.background.setLeftWidth(35f);
         style.background.setRightWidth(15f);
-        style.background.setTopHeight(10f); // Increased from 5f
-        style.background.setBottomHeight(10f); // Increased from 5f
+        style.background.setTopHeight(10f);
+        style.background.setBottomHeight(10f);
 
         style.cursor = skin.getDrawable("cursor");
         skin.add("default", style);
 
         // Create the TextField
         connectCodeInput = new TextField("", skin);
-        connectCodeInput.setSize(320, 60); // Set to ShipContainer size
+        connectCodeInput.setSize(320, 60);
         connectCodeInput.setPosition((ScreenCamera.WORLD_WIDTH - connectCodeInput.getWidth()) / 2, 400);
-        stage.addActor(connectCodeInput); // Add to stage
+        
+        // Add a TextFieldListener to detect text changes
+        connectCodeInput.setTextFieldListener(new TextField.TextFieldListener() {
+            @Override
+            public void keyTyped(TextField textField, char c) {
+                int currentLength = textField.getText().length();
+                
+                // Check if text was added (length increased)
+                if (currentLength > lastTextLength) {
+                    // Play the next sound in sequence
+                    switch (soundIndex) {
+                        case 0:
+                            inputSound1.play(0.6f);
+                            break;
+                        case 1:
+                            inputSound2.play(0.6f);
+                            break;
+                        case 2:
+                            inputSound3.play(0.6f);
+                            break;
+                    }
+                    // Cycle to next sound (0 -> 1 -> 2 -> 0)
+                    soundIndex = (soundIndex + 1) % 3;
+                }
+                // Check if text was deleted (length decreased)
+                else if (currentLength < lastTextLength) {
+                    backspaceSound.play(0.6f);
+                }
+                
+                // Update last length
+                lastTextLength = currentLength;
+            }
+        });
+        
+        stage.addActor(connectCodeInput);
 
         // Instantiate UI Elements
         backButton = new UiButton(atlas, "Back_Inactive", "Back_Active", 0.2f, 110, 580, 64, 44, viewport);
@@ -134,20 +183,19 @@ public class ConnectMenu implements Screen {
         float animY = 300;
         waitingAnimation = new UiDisplay(atlas, "Waiting", 8, 0.8f, animX, animY, animWidth, animHeight, viewport);
 
-
         // Click Handlers
         backButton.setOnClick(() -> {
             if (isHosting || isConnecting) {
                 isHosting = false;
                 isConnecting = false;
-                Gdx.input.setInputProcessor(game.cursorHandler); // Restore default processor
+                Gdx.input.setInputProcessor(game.cursorHandler);
             } else {
                 game.setScreen(new MainMenu(game));
             }
         });
 
         hostingButton.setOnClick(() -> {
-            isHosting = true; // Toggle state
+            isHosting = true;
             System.out.println("Starting hosting");
             GameManager.newInstance(new HostConnection(new ConnectionCallback() {
                 @Override
@@ -163,15 +211,17 @@ public class ConnectMenu implements Screen {
         });
 
         connectButton.setOnClick(() -> {
-            isConnecting = true; // Toggle state
-            Gdx.input.setInputProcessor(inputMultiplexer); // Set combined input
-            stage.setKeyboardFocus(connectCodeInput); // Auto-focus the text field
+            isConnecting = true;
+            Gdx.input.setInputProcessor(inputMultiplexer);
+            stage.setKeyboardFocus(connectCodeInput);
+            // Reset the text length tracker when entering connect mode
+            lastTextLength = 0;
+            soundIndex = 0;
         });
 
         submitConnectButton.setOnClick(() -> {
-            System.out.println("Connecting with code: " + connectCodeInput.getText()); // Just For Debugging
+            System.out.println("Connecting with code: " + connectCodeInput.getText());
 
-            //TODO ClientConnection
             GameManager.newInstance(new ClientConnection(CodeGenerator.decode(connectCodeInput.getText()), new ConnectionCallback() {
                 @Override
                 public void onConnect() {
@@ -207,7 +257,7 @@ public class ConnectMenu implements Screen {
         if (isHosting) {
             waitingAnimation.update(delta);
         } else if (isConnecting) {
-            stage.act(delta); // Update the stage (and textfield)
+            stage.act(delta);
             submitConnectButton.update(delta, viewport);
         } else {
             hostingButton.update(delta, game.screenCamera.getViewport());
