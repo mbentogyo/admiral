@@ -1,5 +1,6 @@
 package com.ThePod.Admirals;
 
+
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -7,13 +8,14 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport; 
 
 public class MainMenu implements Screen {
+
     private Main game;
     private Texture background;
 
-    //Ui Elements
+    //Ui Elements & Local Variables
     private UiButton playButton;
     private UiButton exitButton;
-    private UiDisplay centerPiece; // <-- New line
+    private UiDisplay centerPiece; 
     
     public MainMenu(Main game) {
         this.game = game;
@@ -32,9 +34,9 @@ public class MainMenu implements Screen {
         exitButton = new UiButton(atlas, "Exit_Inactive", "Exit_Active", 0.2f, 750, 150, 160, 60, viewport);
 
 
-        // Click Handdlers
+        // Click Handlers
         playButton.setOnClick(() -> {
-            System.out.println("Play button clicked!");
+            game.setScreen(new ConnectMenu(game));
         });
     
         exitButton.setOnClick(() -> {
@@ -61,12 +63,10 @@ public class MainMenu implements Screen {
 
         // Draw background
         game.batch.begin();
-
-        // Draw the background to fill the virtual world (1280x720)
         game.batch.draw(background, 0, 0, ScreenCamera.WORLD_WIDTH, ScreenCamera.WORLD_HEIGHT);
 
         // Draw Ui Objects
-        centerPiece.render(game.batch); // <-- New line
+        centerPiece.render(game.batch); 
         playButton.render(game.batch);
         exitButton.render(game.batch); 
 
@@ -80,14 +80,6 @@ public class MainMenu implements Screen {
     }
     
     @Override
-    public void pause() {
-    }
-    
-    @Override
-    public void resume() {
-    }
-    
-    @Override
     public void hide() {
     }
     
@@ -95,4 +87,8 @@ public class MainMenu implements Screen {
     public void dispose() {
         // Don't dispose the texture here - AssetLoader manages it
     }
+
+    // Unused methods
+    @Override public void pause() {}     // Not used but required by Screen interface
+    @Override public void resume() {}    // Not used but required by Screen interface
 }
