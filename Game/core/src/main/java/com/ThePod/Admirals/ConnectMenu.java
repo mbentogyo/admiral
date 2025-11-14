@@ -248,12 +248,12 @@ public class ConnectMenu implements Screen {
 
             @Override
             public void onMyTurn() {
-
+                Gdx.app.postRunnable(PlayScreen::onMyTurn);
             }
 
             @Override
             public void onEnemyTurn() {
-
+                Gdx.app.postRunnable(PlayScreen::onEnemyTurn);
             }
 
             @Override
