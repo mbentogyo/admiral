@@ -105,7 +105,7 @@ public class BoardActor extends Group {
     // Called by PlayScreen to show attack results
     public void applyResult(Coordinates coords, AttackResult result, Runnable onComplete) {
 
-        TileActor tile = tiles[coords.y][coords.x];
+        TileActor tile = tiles[coords.getRow()][coords.getColumn()];
 
         if (result == AttackResult.HIT) {
             tile.playHitAnimation(onComplete);
