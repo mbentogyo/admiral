@@ -40,4 +40,11 @@ public enum CellState {
         CellState state = fromName(name);
         return (state != null) ? state.value : 0;
     }
+
+    public static CellState fromInt(int i){
+        for (CellState state : CellState.values()) {
+            if (state.value == i) return state;
+        }
+        return null;
+    }
 }

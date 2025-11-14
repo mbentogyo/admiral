@@ -1,12 +1,14 @@
 package com.ThePod.Admirals;
 
 import com.ThePod.Admirals.board.AttackResult;
+import com.ThePod.Admirals.board.CellState;
 import com.ThePod.Admirals.board.Coordinates;
 import com.ThePod.Admirals.board.EnemyBoard;
 import com.ThePod.Admirals.board.MyBoard;
 import com.ThePod.Admirals.network.Connection;
 import com.ThePod.Admirals.network.callback.TurnCallback;
 import com.ThePod.Admirals.util.CodeGenerator;
+import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import lombok.Getter;
 
 import java.util.Random;
@@ -85,7 +87,17 @@ public class GameManager {
 
         else if (data.startsWith("ATTACK")){
             String crd = data.substring(7);
-            // TODO WHEN ATTACKED
+            Coordinates coordinates = new Coordinates(crd);
+
+            AttackResult result = myBoard.attacked(coordinates);
+            if (result.toString().startsWith("SINK")) {
+                int boat = -myBoard.getBoard()[coordinates.getRow()][coordinates.getColumn()];
+                String s = myBoard.getShip(result.getCellState());
+                connection.sendData("RESULT " + coordinates + " " + result + ";" + s);
+            } else {
+                connection.sendData("RESULT " + coordinates + " " + result);
+                callback.enemyAttack(coordinates, result, "IDK YET");
+            }
         }
 
         else if (data.startsWith("RESULT")) {
@@ -95,16 +107,13 @@ public class GameManager {
                 enemyBoard.attacked(new Coordinates(position), AttackResult.HIT);
             } else if (substring.startsWith("SINK")) {
 
-            } else if (substring.startsWith("MISS")) {
-
-            } else if (substring.startsWith("GAME_OVER")) {
+            } else if (substring.equals("MISS")) {
+                enemyBoard.attacked(new Coordinates(position), AttackResult.MISS);
+            } else if (substring.equals("GAME_OVER")) {
                 //TODO end game logic
                 callback.onGameOver("TODO");
             }
         }
 
-        else if (data.startsWith("ATTACK")) {
-
-        }
     }
 }
