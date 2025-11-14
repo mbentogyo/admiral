@@ -1,10 +1,12 @@
 package com.ThePod.Admirals.board;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MyBoard {
-    private int[][] board;
+    @Getter private int[][] board;
 
     public MyBoard(int[][] board) {
         this.board = board;
