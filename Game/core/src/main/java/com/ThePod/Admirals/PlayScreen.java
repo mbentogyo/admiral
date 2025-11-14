@@ -48,33 +48,28 @@ public class PlayScreen implements Screen {
         this.stage = new Stage(this.viewport, game.batch);
         instance = this;
 
+        // --- FIX: Initialize boards in the constructor ---
+        // This guarantees they exist *before* any network callbacks can fire.
         this.atlas = AssetLoader.getInstance().admiralsUiAtlas;
         this.font = AssetLoader.getInstance().operatorFont;
         this.background = AssetLoader.getInstance().getTexture("Play_Frame.png");
 
         // 1. Create My Board (Player)
-        // FIX: Added 'this' as the second argument
         myBoard = new GameBoard(atlas, this, true); // true = isMyBoard
         myBoard.setPosition(75, 140);
 
         // 2. Create Enemy Board
-        // FIX: Added 'this' as the second argument
         enemyBoard = new GameBoard(atlas, this, false); // false = isMyBoard
         enemyBoard.setPosition(690, 140);
-
-        // 3. Add them to the stage
-
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
 
+        // 3. Add actors to the stage
         stage.addActor(myBoard);
         stage.addActor(enemyBoard);
-
-        // --- Create the two boards ---
-        // We pass 'this' (the PlayScreen) to the boards so they can call back
     }
 
     @Override
