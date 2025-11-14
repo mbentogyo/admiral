@@ -48,6 +48,14 @@ public class PlayScreen implements Screen {
         this.stage = new Stage(this.viewport, game.batch);
         instance = this;
 
+        Gdx.input.setInputProcessor(stage);
+        this.atlas = AssetLoader.getInstance().admiralsUiAtlas;
+        this.font = AssetLoader.getInstance().operatorFont;
+        this.background = AssetLoader.getInstance().getTexture("Play_Frame.png");
+
+        // --- Create the two boards ---
+        // We pass 'this' (the PlayScreen) to the boards so they can call back
+
         // 1. Create My Board (Player)
         // FIX: Added 'this' as the second argument
         myBoard = new GameBoard(atlas, this, true); // true = isMyBoard
@@ -65,13 +73,7 @@ public class PlayScreen implements Screen {
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(stage);
-        this.atlas = AssetLoader.getInstance().admiralsUiAtlas;
-        this.font = AssetLoader.getInstance().operatorFont;
-        this.background = AssetLoader.getInstance().getTexture("Play_Frame.png");
 
-        // --- Create the two boards ---
-        // We pass 'this' (the PlayScreen) to the boards so they can call back
     }
 
     @Override
