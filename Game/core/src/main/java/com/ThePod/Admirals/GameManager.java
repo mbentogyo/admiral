@@ -75,7 +75,7 @@ public class GameManager {
             isMyTurn = new Random().nextBoolean();
             connection.sendData("START! " + !isMyTurn);
 
-            Gdx.app.postRunnable(() -> new PlayScreen(Main.getInstance()));
+            Gdx.app.postRunnable(() -> Main.getInstance().setScreen(new PlayScreen(Main.getInstance())));
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
@@ -83,7 +83,7 @@ public class GameManager {
         else if (data.startsWith("START!")) {
             isMyTurn = Boolean.getBoolean(data.split(" ")[1]);
 
-            Gdx.app.postRunnable(() -> new PlayScreen(Main.getInstance()));
+            Gdx.app.postRunnable(() -> Main.getInstance().setScreen(new PlayScreen(Main.getInstance())));
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
