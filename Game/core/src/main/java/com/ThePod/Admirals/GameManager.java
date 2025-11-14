@@ -81,7 +81,7 @@ public class GameManager {
         }
 
         else if (data.startsWith("START!")) {
-            isMyTurn = Boolean.getBoolean(data.split(" ")[1]);
+            isMyTurn = Boolean.parseBoolean(data.split(" ")[1]);
 
             Gdx.app.postRunnable(() -> Main.getInstance().setScreen(new PlayScreen(Main.getInstance())));
             if (isMyTurn) callback.onMyTurn();
