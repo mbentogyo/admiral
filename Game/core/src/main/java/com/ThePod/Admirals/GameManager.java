@@ -35,6 +35,10 @@ public class GameManager {
         return instance.myBoard.getBoard();
     }
 
+    public static int[][] getEnemyBoard(){
+        return instance.enemyBoard.getBoard();
+    }
+
     public static String getCode(){
         return CodeGenerator.encode(Connection.getCurrentIP());
     }

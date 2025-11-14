@@ -1,20 +1,22 @@
 package com.ThePod.Admirals.board;
 
+import lombok.Getter;
+
+import java.util.List;
+
 public class EnemyBoard {
-    private int[][] board;
+    @Getter private int[][] board;
 
     public EnemyBoard(){
-        this.board = new int[10][10];
+        this.board = new int[15][10];
     }
 
     public void attacked(Coordinates crd, AttackResult result){
         //TODO
     }
 
-    public void sunk(Coordinates[] crds){
-        for (Coordinates crd : crds) {
-
-        }
+    public void boatSunk(List<Coordinates> list, AttackResult result){
+        //TODO
     }
 
 }
