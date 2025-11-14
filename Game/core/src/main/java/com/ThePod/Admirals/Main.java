@@ -11,10 +11,14 @@ import lombok.Getter;
 public class Main extends Game {
 
     // Universal Enablers To Get View Port & Sprites
-    @Getter private Main instance;
+    @Getter private static Main instance;
     public SpriteBatch batch;
     public ScreenCamera screenCamera;
     public CursorHandler cursorHandler;
+
+    public Main(){
+        instance = this;
+    }
 
     @Override
     public void create() {

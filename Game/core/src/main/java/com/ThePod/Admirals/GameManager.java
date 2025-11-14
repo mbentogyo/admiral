@@ -74,6 +74,7 @@ public class GameManager {
             isMyTurn = new Random().nextBoolean();
             connection.sendData("START! " + !isMyTurn);
 
+            new PlayScreen(Main.getInstance());
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
@@ -81,6 +82,7 @@ public class GameManager {
         else if (data.startsWith("START!")) {
             isMyTurn = Boolean.getBoolean(data.split(" ")[1]);
 
+            new PlayScreen(Main.getInstance());
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
