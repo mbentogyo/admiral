@@ -56,16 +56,18 @@ public class PlayScreen implements Screen {
 
         // 1. Create My Board (Player)
         myBoard = new GameBoard(atlas, this, true); // true = isMyBoard
-        myBoard.setPosition(75, 140);
+
 
         // 2. Create Enemy Board
         enemyBoard = new GameBoard(atlas, this, false); // false = isMyBoard
-        enemyBoard.setPosition(690, 140);
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+
+        myBoard.setPosition(75, 140);
+        enemyBoard.setPosition(690, 140);
 
         // 3. Add actors to the stage
         stage.addActor(myBoard);
