@@ -8,6 +8,7 @@ import com.ThePod.Admirals.board.MyBoard;
 import com.ThePod.Admirals.network.Connection;
 import com.ThePod.Admirals.network.callback.TurnCallback;
 import com.ThePod.Admirals.util.CodeGenerator;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import lombok.Getter;
 
@@ -74,7 +75,7 @@ public class GameManager {
             isMyTurn = new Random().nextBoolean();
             connection.sendData("START! " + !isMyTurn);
 
-            new PlayScreen(Main.getInstance());
+            Gdx.app.postRunnable(() -> new PlayScreen(Main.getInstance()));
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
@@ -82,7 +83,7 @@ public class GameManager {
         else if (data.startsWith("START!")) {
             isMyTurn = Boolean.getBoolean(data.split(" ")[1]);
 
-            new PlayScreen(Main.getInstance());
+            Gdx.app.postRunnable(() -> new PlayScreen(Main.getInstance()));
             if (isMyTurn) callback.onMyTurn();
             else callback.onEnemyTurn();
         }
